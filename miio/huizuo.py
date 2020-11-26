@@ -15,10 +15,14 @@ from .device import Device
 from .exceptions import DeviceException
 from .miot_device import MiotDevice
 
+from typing import Any,Dict,Optional
+
 _LOGGER = logging.getLogger(__name__)
 
 _MAPPING = {
     "power": {"siid": 2, "piid": 1},
+    "brigtness": {"siid":2,"piid":2},
+    "color_temp": {"siid":2,"piid":3}
 }
 
 MODEL_HUIZUO_PIS123 = "huayi.light.pis123"
@@ -72,7 +76,37 @@ class HuizuoStatus:
         )
         return s
 
-class HuizuoMiOT(MiotDevice):
+
+class HuizuoMiotStatus:
+    def __init__(self, data: Dict[str, Any]) -> None:
+        self.data = data
+    
+    @property
+    def is_on(self) -> bool:
+        """Return True if device is on."""
+        return self.data["power"]
+    
+    @property
+    def brightness(self) -> int:
+        """Return current brightness."""
+        return self.data["brightness"]
+
+    @property
+    def color_temp(self) -> int:
+        """Return current color temperature."""
+        return self.data["temperature"]
+
+    def __repr__(self):
+        s = "<Huizuo on=%s brightness=%s color_temp=%s>" % (
+            self.is_on,
+            self.brightness,
+            self.color_temp,
+        )
+        return s
+
+
+
+class HuizuoMiot(MiotDevice):
     def __init__(self,
         ip: str = None,
         token: str = None,
@@ -95,9 +129,57 @@ class HuizuoMiOT(MiotDevice):
     @command(
         default_output=format_output("Powering on"),
     )
-    def miot_on(self):
+    def on(self):
         """Power on."""
         return self.set_property("power",True)       
+    @command(
+        default_output=format_output("Powering off"),
+    )
+    def off(self):
+        """Power off."""
+        return self.set_property("power",False)
+
+    @command(
+        default_output=format_output(
+            "\n",
+            "Power: {result.is_on}\n"
+            "Brightness: {result.brightness}\n"
+            "Temperature: {result.color_temp}\n"
+            "\n",
+        )
+    )
+    def status(self) -> HuizuoMiotStatus:
+        """Retrieve properties."""
+
+        return HuizuoMiotStatus(
+            {
+                prop["did"]: prop["value"] if prop["code"] == 0 else None
+                for prop in self.get_properties_for_mapping()
+            }
+        )
+
+    @command(
+        click.argument("level", type=int),
+        default_output=format_output("Setting brightness to {level}"),
+    )
+    def set_brightness(self, level):
+        """Set brightness."""
+        if level < 0 or level > 100:
+            raise HuizuoException("Invalid brightness: %s" % level)
+
+        return self.set_property("brightness", level)
+
+    @command(
+        click.argument("color_temp", type=int),
+        default_output=format_output("Setting color temperature to {color_temp}"),
+    )
+    def set_color_temp(self, color_temp):
+        """Set color temp in kelvin."""
+        if color_temp < 3000 or color_temp > 6400:
+            raise HuizuoException("Invalid color temperature: %s" % color_temp)
+
+        return self.set_property("color_temp", color_temp)
+
 
 class Huizuo(Device):
     """A support for Huizuo PIS123."""
