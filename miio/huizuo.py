@@ -95,7 +95,7 @@ class HuizuoMiotStatus:
     @property
     def color_temp(self) -> int:
         """Return current color temperature."""
-        return self.data["temperature"]
+        return self.data["color_temp"]
 
     def __repr__(self):
         s = "<Huizuo on=%s brigtness=%s color_temp=%s>" % (
@@ -145,7 +145,7 @@ class HuizuoMiot(MiotDevice):
             "\n",
             "Power: {result.is_on}\n"
             "Brigtness: {result.brigtness}\n"
-            "Temperature: {result.color_temp}\n"
+            "Color Temperature: {result.color_temp}\n"
             "\n",
         )
     )
