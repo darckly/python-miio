@@ -17,6 +17,10 @@ from .miot_device import MiotDevice
 
 _LOGGER = logging.getLogger(__name__)
 
+_MAPPING = {
+    "power": {"siid": 2, "piid": 1},
+}
+
 MODEL_HUIZUO_PIS123 = "huayi.light.pis123"
 
 MODELS_SUPPORTED = [MODEL_HUIZUO_PIS123]
@@ -69,16 +73,16 @@ class HuizuoStatus:
         return s
 
 class HuizuoMiOT(MiotDevice):
-    def __init__(
-        self,
+    def __init__(self,
         ip: str = None,
         token: str = None,
         start_id: int = 0,
         debug: int = 0,
         lazy_discover: bool = True,
-        model: str = MODEL_HUIZUO_PIS123,
     ) -> None:
-        super().__init__(ip, token, start_id, debug, lazy_discover)
+        super().__init__(_MAPPING, ip, token, start_id, debug, lazy_discover)
+
+        model = MODEL_HUIZUO_PIS123
 
         if model in MODELS_SUPPORTED:
             self.model = model
