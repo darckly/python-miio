@@ -13,6 +13,7 @@ import click
 from .click_common import command, format_output
 from .device import Device
 from .exceptions import DeviceException
+from .miot_device import MiotDevice
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -67,6 +68,32 @@ class HuizuoStatus:
         )
         return s
 
+class HuizuoMiOT(MiotDevice):
+    def __init__(
+        self,
+        ip: str = None,
+        token: str = None,
+        start_id: int = 0,
+        debug: int = 0,
+        lazy_discover: bool = True,
+        model: str = MODEL_HUIZUO_PIS123,
+    ) -> None:
+        super().__init__(ip, token, start_id, debug, lazy_discover)
+
+        if model in MODELS_SUPPORTED:
+            self.model = model
+        else:
+            self.model = MODEL_HUIZUO_PIS123
+            _LOGGER.error(
+                "Device model %s unsupported. Falling back to %s.", model, self.model
+            )
+
+    @command(
+        default_output=format_output("Powering on"),
+    )
+    def miot_on(self):
+        """Power on."""
+        return self.set_property("power",True)       
 
 class Huizuo(Device):
     """A support for Huizuo PIS123."""
