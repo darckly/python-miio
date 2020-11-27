@@ -11,18 +11,19 @@ import logging
 import click
 
 from .click_common import command, format_output
-#from .device import Device
+
+# from .device import Device
 from .exceptions import DeviceException
 from .miot_device import MiotDevice
 
-from typing import Any,Dict,Optional
+from typing import Any, Dict, Optional
 
 _LOGGER = logging.getLogger(__name__)
 
 _MAPPING = {
     "power": {"siid": 2, "piid": 1},
-    "brigtness": {"siid":2,"piid":2},
-    "color_temp": {"siid":2,"piid":3}
+    "brigtness": {"siid": 2, "piid": 2},
+    "color_temp": {"siid": 2, "piid": 3},
 }
 
 MODEL_HUIZUO_PIS123 = "huayi.light.pis123"
@@ -32,6 +33,7 @@ MODELS_SUPPORTED = [MODEL_HUIZUO_PIS123]
 
 class HuizuoException(DeviceException):
     pass
+
 
 class HuizuoMiotStatus:
     def __init__(self, data: Dict[str, Any]) -> None:
@@ -51,12 +53,12 @@ class HuizuoMiotStatus:
         """
 
         self.data = data
-    
+
     @property
     def is_on(self) -> bool:
         """Return True if device is on."""
         return self.data["power"]
-    
+
     @property
     def brigtness(self) -> int:
         """Return current brigtness."""
@@ -76,11 +78,11 @@ class HuizuoMiotStatus:
         return s
 
 
-
 class HuizuoMiot(MiotDevice):
     """A support for Huizuo PIS123."""
 
-    def __init__(self,
+    def __init__(
+        self,
         ip: str = None,
         token: str = None,
         start_id: int = 0,
@@ -90,27 +92,25 @@ class HuizuoMiot(MiotDevice):
     ) -> None:
         super().__init__(_MAPPING, ip, token, start_id, debug, lazy_discover)
 
-
         if model in MODELS_SUPPORTED:
             self.model = model
         else:
             self.model = MODEL_HUIZUO_PIS123
-            _LOGGER.error(
-                "Device model %s unsupported. Falling back to %s.", model, self.model
-            )
+            _LOGGER.error("Device model %s unsupported. Falling back to %s.", model, self.model)
 
     @command(
         default_output=format_output("Powering on"),
     )
     def on(self):
         """Power on."""
-        return self.set_property("power",True)       
+        return self.set_property("power", True)
+
     @command(
         default_output=format_output("Powering off"),
     )
     def off(self):
         """Power off."""
-        return self.set_property("power",False)
+        return self.set_property("power", False)
 
     @command(
         default_output=format_output(
@@ -135,7 +135,7 @@ class HuizuoMiot(MiotDevice):
         click.argument("level", type=int),
         default_output=format_output("Setting brigtness to {level}"),
     )
-    def set_brightness(self, level):
+    def set_brigtness(self, level):
         """Set brigtness."""
         if level < 0 or level > 100:
             raise HuizuoException("Invalid brigtness: %s" % level)
@@ -152,4 +152,3 @@ class HuizuoMiot(MiotDevice):
             raise HuizuoException("Invalid color temperature: %s" % color_temp)
 
         return self.set_property("color_temp", color_temp)
-
